@@ -1,4 +1,4 @@
-# 🦀 OpenClaw · Token Cost Estimator
+# 🦞 OpenClaw · Token Cost Estimator
 
 > Estimate AI token costs across multiple providers — in plain language, no technical knowledge required.
 > 用普通人能看懂的方式，估算不同 AI 模型的 Token 费用。
@@ -54,18 +54,6 @@ Instead of asking you to input raw token counts, OpenClaw translates real-world 
 ### 📊 Operations
 `Ops Data Scraping` — scrape daily reports, dashboards, KPI summaries  
 `Heartbeat / Cron Job` — scheduled polling, service monitoring, auto-alerts
-
----
-
-## Run Locally
-
-No build step, no npm install.
-
-```bash
-git clone https://github.com/RoverF/Openclaw-estimator.git
-cd Openclaw-estimator
-open index.html   # or just drag into your browser
-```
 
 ---
 
