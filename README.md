@@ -1,7 +1,7 @@
-# 🦞 ClawCount · Token Cost Estimator
+# 🦀 OpenClaw · Token Cost Estimator
 
 > Estimate AI token costs across multiple providers — in plain language, no technical knowledge required.
-> 用普通人能看懂的方式，估算龙虾使用不同 AI 模型完成不同工作的 Token 费用。
+> 用普通人能看懂的方式，估算不同 AI 模型的 Token 费用。
 
 **[🚀 Live Demo](https://roverf.github.io/Openclaw-estimator)** · Built with zero dependencies · Pure HTML/JS
 
@@ -22,7 +22,7 @@ Instead of asking you to input raw token counts, OpenClaw translates real-world 
 - 🗂 **12 preset task types** — from writing code to ops data scraping to heartbeat/cron jobs
 - 🌍 **Bilingual UI** — switch between Chinese (中文) and English instantly
 - 🧠 **Human-friendly parameters** — no token knowledge needed ("one file" → auto-converts to tokens)
-- 💰 **7 models, 5 providers** — Anthropic, OpenAI, Google, Moonshot AI, MiniMax
+- 💰 **9 models, 6 providers** — Anthropic, OpenAI, Google, Moonshot AI, MiniMax, Zhipu AI
 - 📊 **Real-time cost comparison** with visual bar charts
 - ⚡ **Smart recommendations** based on task type and scale
 - 📈 **Scale calculator** — from single call to 100K/month
@@ -41,6 +41,8 @@ Instead of asking you to input raw token counts, OpenClaw translates real-world 
 | Google | Gemini 2.5 Flash | $0.30 | $2.50 | Scraping & cron jobs |
 | Moonshot AI | Kimi 2.5 | $1.40 | $4.00 | Long-context (2M tokens) |
 | MiniMax | MiniMax M2.5 | $0.15 | $0.90 | Budget routine tasks |
+| Zhipu AI | GLM-4.7 | $0.60 | $2.20 | Open-source coding #1 (SWE-bench 73.8%) |
+| Zhipu AI | GLM-4.5 | $0.60 | $2.20 | Balanced, strong Chinese reasoning |
 
 ---
 
@@ -86,6 +88,6 @@ Prices sourced from official provider documentation as of 2026 Q1. Actual billin
 
 ## License
 
-MIT — use it, fork it, build on it.
+MIT
 
 ---

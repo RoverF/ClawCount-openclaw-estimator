@@ -11,29 +11,44 @@ function calcAllCosts({ inputLevel, outputLevel, toolLevel, sysTokens, scale }) 
   const scaledInput  = totalInput  * scale;
   const scaledOutput = totalOutput * scale;
 
-  const costs = MODELS.map(model => ({
+  const all = MODELS.map(model => ({
     model,
     cost:       (scaledInput  / 1e6) * model.inputPer1M + (scaledOutput / 1e6) * model.outputPer1M,
     inputCost:  (scaledInput  / 1e6) * model.inputPer1M,
     outputCost: (scaledOutput / 1e6) * model.outputPer1M,
-  })).sort((a, b) => a.cost - b.cost);
+  }));
+
+  // Free models pinned at end; paid models sorted cheapest first
+  const paid = all.filter(r => !r.model.isFree).sort((a, b) => a.cost - b.cost);
+  const free = all.filter(r =>  r.model.isFree);
+  const costs = [...paid, ...free];
 
   return { totalInput, totalOutput, scaledInput, scaledOutput, toolCalls, toolTokens,
-    costs, minCost: costs[costs.length-1].cost === costs[0].cost ? costs[0].cost : costs[0].cost,
-    maxCost: costs[costs.length-1].cost };
+    costs,
+    minCost: paid.length ? paid[0].cost : 0,
+    maxCost: paid.length ? paid[paid.length - 1].cost : 0,
+  };
 }
 
 function getRecommendation(taskId, totalTokens, lang) {
-  const r = I18N[lang].rec;
-  if (taskId === 'heartbeat')                         return r.heartbeat;
-  if (taskId === 'ops_scrape' && totalTokens > 20000) return r.opsScrapeLong;
-  if (taskId === 'ops_scrape')                        return r.opsScrape;
-  if (taskId === 'agent' || taskId === 'migrate')     return r.agent;
-  if (taskId === 'search'    && totalTokens > 20000)  return r.searchLong;
-  if (taskId === 'explain'   || taskId === 'docs')    return r.docs;
-  if (taskId === 'codewrite' || taskId === 'refactor')return r.coding;
-  if (totalTokens > 30000)                            return r.longContext;
-  return r.default;
+  const zh = lang === 'zh';
+  if (taskId === 'heartbeat')
+    return zh ? 'Gemini 2.5 Flash — 定时任务，成本极低'         : 'Gemini 2.5 Flash — Cron jobs, ultra-low cost';
+  if (taskId === 'ops_scrape' && totalTokens > 20000)
+    return zh ? 'Kimi 2.5 — 超长上下文抓取，2M token 无损'      : 'Kimi 2.5 — Long-context scraping, up to 2M tokens';
+  if (taskId === 'ops_scrape')
+    return zh ? 'Gemini 2.5 Flash — 轻量抓取，最省成本'          : 'Gemini 2.5 Flash — Light scraping, cheapest';
+  if (taskId === 'agent' || taskId === 'migrate')
+    return zh ? 'Claude 3.5 Sonnet — Coding Agent 首选'         : 'Claude 3.5 Sonnet — Best for coding agents';
+  if (taskId === 'codewrite' || taskId === 'refactor')
+    return zh ? 'GLM-4.7 — 开源编程第一，性价比极高'             : 'GLM-4.7 — #1 open-source coding, great value';
+  if (taskId === 'search' && totalTokens > 20000)
+    return zh ? 'Kimi 2.5 — 超长上下文检索'                     : 'Kimi 2.5 — Long-context code search';
+  if (taskId === 'explain' || taskId === 'docs')
+    return zh ? 'MiniMax M2.5 — 文档任务最省钱'                  : 'MiniMax M2.5 — Cheapest for doc tasks';
+  if (totalTokens > 30000)
+    return zh ? 'Kimi 2.5 — 超长上下文首选'                     : 'Kimi 2.5 — Best for long context';
+  return zh   ? 'GLM-4.7 — 均衡性价比，推荐首试'                : 'GLM-4.7 — Balanced value, good default choice';
 }
 
 function fmt(n) {

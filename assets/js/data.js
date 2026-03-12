@@ -81,6 +81,30 @@ const MODELS = [
     outputPer1M: 0.90,
     desc: { zh: '低复杂度常规任务，最省钱', en: 'Budget pick for routine tasks' },
   },
+  // ── Zhipu AI (Z.AI) ──────────────────────────────────────────────────────
+  // Pricing via Z.AI platform (docs.z.ai) · Updated 2026.Q1
+  {
+    id: 'glm47',
+    name: 'GLM-4.7',
+    tier: 'Flagship',
+    color: '#38bdf8',
+    provider: 'Zhipu AI',
+    providerColor: '#0ea5e9',
+    inputPer1M: 0.60,
+    outputPer1M: 2.20,
+    desc: { zh: '开源旗舰，编程 #1，200K 上下文', en: 'Open-source flagship, #1 Code Arena, 200K ctx' },
+  },
+  {
+    id: 'glm45',
+    name: 'GLM-4.5',
+    tier: 'Balanced',
+    color: '#7dd3fc',
+    provider: 'Zhipu AI',
+    providerColor: '#0ea5e9',
+    inputPer1M: 0.60,
+    outputPer1M: 2.20,
+    desc: { zh: '均衡性能，中文推理强', en: 'Balanced, strong Chinese reasoning' },
+  },
 ];
 
 // ── Tasks ──────────────────────────────────────────────────────────────────

@@ -113,6 +113,8 @@ function renderModels(result) {
     const cheapBadge  = i === 0 ? `<span class="cheap-badge">${s.cheapest}</span>` : '';
     const kimiTip     = model.id === 'kimi25'
       ? `<div class="kimi-tip">${s.kimiTip}</div>` : '';
+    const glmTip      = model.id === 'glm47'
+      ? `<div class="kimi-tip" style="color:#7dd3fc;background:rgba(56,189,248,0.06);border-color:rgba(56,189,248,0.2)">⚡ SWE-bench 73.8% — 超越 Claude Sonnet 4.5，开源编程排行第一</div>` : '';
 
     const row = document.createElement('div');
     row.className = 'model-row';
@@ -144,7 +146,7 @@ function renderModels(result) {
         <div class="token-chip">Out cost <span>${fmt(outputCost)}</span></div>
       </div>
       <div class="cost-bar-wrap"><div class="cost-bar" style="width:${pct}%;background:${model.color}"></div></div>
-      ${kimiTip}
+      ${kimiTip}${glmTip}
     `;
     list.appendChild(row);
   });
