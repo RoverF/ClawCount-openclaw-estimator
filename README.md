@@ -3,7 +3,7 @@
 > Estimate AI token costs across multiple providers — in plain language, no technical knowledge required.
 > 用普通人能看懂的方式，估算不同 AI 模型的 Token 费用。
 
-**[🚀 Try it out!](https://roverf.github.io/Openclaw-estimator)** 
+**[🚀 Try it out!](https://clawcount.top)** 
 
 ---
 
@@ -26,7 +26,6 @@ Instead of asking you to input raw token counts, OpenClaw translates real-world 
 - 📊 **Real-time cost comparison** with visual bar charts
 - ⚡ **Smart recommendations** based on task type and scale
 - 📈 **Scale calculator** — from single call to 100K/month
-- 🌙 **Zero dependencies** — single `index.html`, works offline
 
 ---
 
