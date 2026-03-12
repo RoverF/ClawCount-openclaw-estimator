@@ -1,221 +1,13 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ClawCount · Token Cost Estimator</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0a0c0f;
-    --surface: #111418;
-    --surface2: #181c22;
-    --border: #1e2530;
-    --border2: #252d3a;
-    --text: #e2e8f0;
-    --text2: #7a8fa8;
-    --text3: #4a5a6e;
-    --accent: #00d4aa;
-    --accent2: #0099ff;
-    --mono: 'IBM Plex Mono', monospace;
-    --sans: 'IBM Plex Sans', sans-serif;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(0,212,170,0.015) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,212,170,0.015) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-  .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; position: relative; z-index: 1; }
-
-  /* ── Header ── */
-  header { display: flex; align-items: center; gap: 16px; margin-bottom: 48px; flex-wrap: wrap; }
-  .logo { display: flex; align-items: center; gap: 10px; }
-  .logo-icon {
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px;
-  }
-  .logo-text { font-family: var(--mono); font-size: 18px; font-weight: 600; letter-spacing: -0.5px; }
-  .logo-text span { color: var(--accent); }
-  .header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-
-  /* ── Lang Toggle ── */
-  .lang-toggle {
-    display: flex;
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 6px;
-    overflow: hidden;
-  }
-  .lang-btn {
-    font-family: var(--mono);
-    font-size: 11px;
-    padding: 5px 12px;
-    border: none;
-    background: transparent;
-    color: var(--text3);
-    cursor: pointer;
-    transition: all 0.15s;
-    letter-spacing: 0.5px;
-  }
-  .lang-btn.active { background: var(--accent); color: #000; font-weight: 600; }
-
-  .header-tag {
-    font-family: var(--mono); font-size: 11px; color: var(--text3);
-    border: 1px solid var(--border2); padding: 3px 8px; border-radius: 4px;
-    letter-spacing: 1px; text-transform: uppercase;
-  }
-  .live-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; display: inline-block; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-
-  /* ── Section Labels ── */
-  .section-label {
-    font-family: var(--mono); font-size: 10px; color: var(--text3);
-    letter-spacing: 2px; text-transform: uppercase;
-    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
-  }
-  .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
-
-  /* ── Task Grid ── */
-  .task-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 10px; margin-bottom: 40px; }
-  .task-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 16px; cursor: pointer;
-    transition: all 0.15s ease; position: relative; overflow: hidden;
-  }
-  .task-card::before {
-    content:''; position:absolute; top:0;left:0;right:0; height:2px;
-    background:var(--accent); transform:scaleX(0); transform-origin:left; transition:transform 0.2s;
-  }
-  .task-card:hover { border-color:var(--border2); background:var(--surface2); }
-  .task-card:hover::before, .task-card.selected::before { transform:scaleX(1); }
-  .task-card.selected { border-color:var(--accent); background:rgba(0,212,170,0.05); }
-  .task-icon { font-size: 20px; margin-bottom: 8px; }
-  .task-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
-  .task-desc { font-size: 11px; color: var(--text2); line-height: 1.5; }
-  .task-meta {
-    font-family: var(--mono); font-size: 10px; color: var(--text3);
-    margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
-    display: flex; justify-content: space-between;
-  }
-  .task-category {
-    font-family: var(--mono); font-size: 9px; letter-spacing: 1px;
-    text-transform: uppercase; padding: 2px 6px; border-radius: 3px;
-    margin-bottom: 6px; display: inline-block;
-  }
-
-  /* ── Main Grid ── */
-  .main-grid { display: grid; grid-template-columns: 1fr 390px; gap: 24px; align-items: start; }
-  @media (max-width: 800px) { .main-grid { grid-template-columns: 1fr; } }
-
-  /* ── Panel ── */
-  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-  .panel-header {
-    padding: 16px 20px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .panel-title { font-family: var(--mono); font-size: 12px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; }
-  .panel-body { padding: 20px; }
-
-  /* ── Sliders ── */
-  .slider-row { margin-bottom: 22px; }
-  .slider-label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .slider-name { font-size: 13px; color: var(--text2); }
-  .slider-value { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 500; }
-  input[type=range] {
-    width: 100%; height: 4px; background: var(--border2);
-    border-radius: 2px; outline: none; -webkit-appearance: none; cursor: pointer;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none; width: 14px; height: 14px;
-    background: var(--accent); border-radius: 50%; cursor: pointer; transition: transform 0.1s;
-  }
-  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.3); }
-  .slider-hints { display:flex; justify-content:space-between; margin-top:5px; font-size:10px; color:var(--text3); font-family:var(--mono); }
-
-  /* ── Translation Box ── */
-  #tokenTranslation {
-    margin-top: 16px; padding: 12px 14px;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 8px; font-family: var(--mono); font-size: 11px;
-    color: var(--text3); line-height: 2;
-  }
-
-  /* ── Scale Tabs ── */
-  .scale-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
-  .scale-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
-  .scale-tab {
-    font-family: var(--mono); font-size: 11px; padding: 5px 12px;
-    border-radius: 5px; border: 1px solid var(--border2);
-    background: transparent; color: var(--text3); cursor: pointer; transition: all 0.15s;
-  }
-  .scale-tab:hover { border-color: var(--accent); color: var(--text); }
-  .scale-tab.active { background: rgba(0,212,170,0.1); border-color: var(--accent); color: var(--accent); }
-
-  /* ── Summary Card ── */
-  .summary-card {
-    background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(0,153,255,0.05));
-    border: 1px solid rgba(0,212,170,0.2); border-radius: 12px;
-    padding: 20px; margin-bottom: 24px;
-  }
-  .summary-title { font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 14px; }
-  .summary-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-  .stat-label { font-size: 11px; color: var(--text3); margin-bottom: 3px; font-family: var(--mono); }
-  .stat-value { font-family: var(--mono); font-size: 18px; font-weight: 600; }
-  .rec-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-family: var(--mono); font-size: 10px; padding: 5px 12px;
-    border-radius: 20px; background: rgba(0,212,170,0.1);
-    border: 1px solid rgba(0,212,170,0.3); color: var(--accent); margin-top: 12px;
-  }
-
-  /* ── Model Rows ── */
-  .model-list { display: flex; flex-direction: column; gap: 10px; }
-  .model-row {
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 16px; transition: border-color 0.15s;
-    animation: fadeUp 0.3s ease both;
-  }
-  .model-row:hover { border-color: var(--border2); }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-  .model-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
-  .model-info { display: flex; align-items: flex-start; gap: 10px; }
-  .model-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
-  .model-name { font-family: var(--mono); font-size: 13px; font-weight: 500; }
-  .model-tier {
-    font-size: 10px; color: var(--text3); padding: 2px 6px;
-    border-radius: 3px; border: 1px solid var(--border2); font-family: var(--mono);
-  }
-  .model-cost { font-family: var(--mono); font-size: 16px; font-weight: 600; text-align: right; }
-  .model-cost-label { font-size: 10px; color: var(--text3); text-align: right; font-family: var(--mono); }
-  .token-breakdown { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
-  .token-chip { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 3px; background: var(--border); color: var(--text3); }
-  .token-chip span { color: var(--text2); }
-  .cost-bar-wrap { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 10px; }
-  .cost-bar { height: 100%; border-radius: 2px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
-
-  /* ── Footnote ── */
-  .footnote {
-    font-family: var(--mono); font-size: 10px; color: var(--text3);
-    margin-top: 24px; line-height: 1.8; text-align: center;
-    padding: 16px; border: 1px solid var(--border); border-radius: 8px;
-  }
-  .no-select { user-select: none; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClawCount · Token Cost Estimator</title>
+  <meta name="description" content="Estimate AI token costs across 7 models from 5 providers. No token knowledge required.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
 </head>
 <body>
 <div class="container">
@@ -225,63 +17,56 @@
       <div class="logo-icon">🦞</div>
       <div class="logo-text">Claw<span>Count</span></div>
     </div>
-    <div style="display:flex;align-items:center;margin-left:2px">
-      <span style="font-family:var(--sans);font-size:12px;font-style:italic;color:var(--text3);letter-spacing:0.2px">"What will my next AI call actually cost?"</span>
-    </div>
+    <span id="tagline" class="tagline"></span>
     <div class="header-right">
       <div class="lang-toggle">
         <button class="lang-btn active" data-lang="zh">中文</button>
         <button class="lang-btn" data-lang="en">EN</button>
       </div>
-      <div class="header-tag"><span class="live-dot"></span>&nbsp;<span data-i18n="headerTag">Token Estimator</span></div>
+      <div class="header-tag"><span class="live-dot"></span>&nbsp;<span id="headerTag"></span></div>
     </div>
   </header>
 
-  <div class="section-label" id="sectionTask">01 · 选择任务类型</div>
+  <div class="section-label" id="sectionTask"></div>
   <div class="task-grid" id="taskGrid"></div>
 
   <div class="main-grid">
     <div>
-      <div class="section-label" id="sectionParams">02 · 描述你的任务规模</div>
+      <div class="section-label" id="sectionParams"></div>
       <div class="panel" style="margin-bottom:24px">
         <div class="panel-header">
-          <span class="panel-title" data-i18n="panelTitle">任务参数</span>
+          <span class="panel-title" id="panelTitle"></span>
           <span style="font-family:var(--mono);font-size:11px;color:var(--text3)" id="totalTokensDisplay">0 tokens</span>
         </div>
         <div class="panel-body">
-
           <div class="slider-row">
             <div class="slider-label">
-              <span class="slider-name" data-i18n="inputQ">📄 给 AI 看的内容有多少？</span>
+              <span class="slider-name" id="inputQ"></span>
               <span class="slider-value" id="inputHumanVal">—</span>
             </div>
             <input type="range" id="inputHumanSlider" min="0" max="7" step="1" value="2">
             <div class="slider-hints" id="inputHints"></div>
           </div>
-
           <div class="slider-row">
             <div class="slider-label">
-              <span class="slider-name" data-i18n="outputQ">💬 你希望 AI 回复多详细？</span>
+              <span class="slider-name" id="outputQ"></span>
               <span class="slider-value" id="outputHumanVal">—</span>
             </div>
             <input type="range" id="outputHumanSlider" min="0" max="4" step="1" value="2">
             <div class="slider-hints" id="outputHints"></div>
           </div>
-
           <div class="slider-row">
             <div class="slider-label">
-              <span class="slider-name" data-i18n="toolQ">🤖 AI 需要自己查多少东西？</span>
+              <span class="slider-name" id="toolQ"></span>
               <span class="slider-value" id="toolHumanVal">—</span>
             </div>
             <input type="range" id="toolHumanSlider" min="0" max="4" step="1" value="1">
             <div class="slider-hints" id="toolHints"></div>
           </div>
-
           <div id="tokenTranslation"></div>
-
           <div class="scale-section">
             <div class="slider-label">
-              <span class="slider-name" data-i18n="scaleQ">📈 你打算用多少次？</span>
+              <span class="slider-name" id="scaleQ"></span>
               <span class="slider-value" id="scaleDisplay">—</span>
             </div>
             <div class="scale-tabs" id="scaleTabs"></div>
@@ -290,505 +75,41 @@
       </div>
 
       <div class="summary-card">
-        <div class="summary-title" data-i18n="summaryTitle">📊 当前估算摘要</div>
+        <div class="summary-title" id="summaryTitle"></div>
         <div class="summary-stats">
-          <div><div class="stat-label" data-i18n="statInput">总输入量</div><div class="stat-value" id="sumInput">—</div></div>
-          <div><div class="stat-label" data-i18n="statOutput">总输出量</div><div class="stat-value" id="sumOutput">—</div></div>
-          <div><div class="stat-label" data-i18n="statMin">💚 最低费用</div><div class="stat-value" id="sumMin">—</div></div>
-          <div><div class="stat-label" data-i18n="statMax">💜 最高费用</div><div class="stat-value" id="sumMax">—</div></div>
+          <div><div class="stat-label" id="statInput"></div><div class="stat-value" id="sumInput">—</div></div>
+          <div><div class="stat-label" id="statOutput"></div><div class="stat-value" id="sumOutput">—</div></div>
+          <div><div class="stat-label" id="statMin"></div><div class="stat-value" id="sumMin">—</div></div>
+          <div><div class="stat-label" id="statMax"></div><div class="stat-value" id="sumMax">—</div></div>
         </div>
         <div class="rec-badge" id="recBadge">⚡ —</div>
       </div>
     </div>
 
     <div>
-      <div class="section-label" id="sectionModels">03 · 模型价格对比</div>
+      <div class="section-label" id="sectionModels"></div>
       <div class="model-list" id="modelList"></div>
     </div>
   </div>
 
   <div class="footnote" id="footnote"></div>
+
+  <div class="credit">
+    <span>Built by</span>
+    <a href="https://x.com/Frankie_iter" target="_blank" rel="noopener" class="credit-link">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-label="X (Twitter)">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+      </svg>
+      @Frankie_iter
+    </a>
+  </div>
 </div>
 
-<script>
-// ═══════════════════════════════════════════════════════════
-// i18n
-// ═══════════════════════════════════════════════════════════
-const I18N = {
-  zh: {
-    headerTag: 'Token 估算器',
-    sectionTask: '01 · 选择任务类型',
-    sectionParams: '02 · 描述你的任务规模',
-    sectionModels: '03 · 模型价格对比',
-    panelTitle: '任务参数（普通话描述）',
-    inputQ: '📄 给 AI 看的内容有多少？',
-    outputQ: '💬 你希望 AI 回复多详细？',
-    toolQ: '🤖 AI 需要自己查多少东西？',
-    scaleQ: '📈 你打算用多少次？',
-    summaryTitle: '📊 当前估算摘要',
-    statInput: '总输入量',
-    statOutput: '总输出量',
-    statMin: '💚 最低费用',
-    statMax: '💜 最高费用',
-    recPrefix: '⚡ 推荐：',
-    cheapest: '最低价',
-    perReq: '单次',
-    times: '次',
-    transTitle: '换算说明',
-    transInput: '输入',
-    transOutput: '输出',
-    transTool: '工具',
-    transCalls: '次调用',
-    transTotal: '合计',
-    footnote: '价格来源: Anthropic · OpenAI · Google · Moonshot AI · MiniMax 官方文档 (2026.Q1)\n1 token ≈ 0.75 英文单词 · 中文约 0.5 字/token · Kimi 2.5 支持最长 2M token 上下文\n以上为估算值，实际费用以各平台账单为准 · OpenClaw v2026.Q1',
-    kimiTip: '🧠 支持 2M token 超长上下文 — 大文档分析首选，减少信息截断',
-    scaleTabs: ['就试一次','每天 100次','每天 1千次','每天 1万次','每月 10万次'],
-    inputHints: ['一句话','一个函数','一个文件','几个文件','一个模块','半个项目','整个项目','超大项目'],
-    outputHints: ['一句话','一段解释','完整代码','详细报告','全套方案'],
-    toolHints: ['不用查','查几个文件','查整个仓库','全自动 Agent','超级 Agent'],
-  },
-  en: {
-    headerTag: 'Token Estimator',
-    sectionTask: '01 · Select Task Type',
-    sectionParams: '02 · Describe Your Task Scale',
-    sectionModels: '03 · Model Price Comparison',
-    panelTitle: 'Task Parameters',
-    inputQ: '📄 How much content does the AI need to read?',
-    outputQ: '💬 How detailed should the response be?',
-    toolQ: '🤖 How much does the AI need to look up?',
-    scaleQ: '📈 How many times will you run this?',
-    summaryTitle: '📊 Estimation Summary',
-    statInput: 'Total Input',
-    statOutput: 'Total Output',
-    statMin: '💚 Lowest Cost',
-    statMax: '💜 Highest Cost',
-    recPrefix: '⚡ Recommended: ',
-    cheapest: 'Best Price',
-    perReq: 'per call',
-    times: ' calls',
-    transTitle: 'Token Breakdown',
-    transInput: 'Input',
-    transOutput: 'Output',
-    transTool: 'Tools',
-    transCalls: ' calls',
-    transTotal: 'Total',
-    footnote: 'Pricing: Anthropic · OpenAI · Google · Moonshot AI · MiniMax official docs (2026.Q1)\n1 token ≈ 0.75 English words · Kimi 2.5 supports up to 2M token context\nEstimated values only — refer to each provider\'s billing for actuals · OpenClaw v2026.Q1',
-    kimiTip: '🧠 Up to 2M token context window — ideal for large document analysis with minimal info loss',
-    scaleTabs: ['Just once','100/day','1K/day','10K/day','100K/month'],
-    inputHints: ['One sentence','One function','One file','A few files','One module','Half a project','Full project','Massive codebase'],
-    outputHints: ['One line','A paragraph','Full code','Detailed report','Complete solution'],
-    toolHints: ['None','A few files','Whole repo','Full Agent','Super Agent'],
-  }
-};
-
-// ═══════════════════════════════════════════════════════════
-// TASKS  (bilingual)
-// ═══════════════════════════════════════════════════════════
-const TASKS = [
-  {
-    id:'codewrite', icon:'💻', category:'dev',
-    zh:{ name:'写代码', desc:'生成新功能、组件、模块' },
-    en:{ name:'Write Code', desc:'Generate new features, components, modules' },
-    sysTokens:300, toolCalls:2,
-  },
-  {
-    id:'codefix', icon:'🐛', category:'dev',
-    zh:{ name:'Debug / 修 Bug', desc:'分析错误、定位问题、提出修复' },
-    en:{ name:'Debug / Fix Bugs', desc:'Analyze errors, locate issues, propose fixes' },
-    sysTokens:200, toolCalls:5,
-  },
-  {
-    id:'refactor', icon:'♻️', category:'dev',
-    zh:{ name:'重构代码', desc:'改善结构、提升可读性' },
-    en:{ name:'Refactor Code', desc:'Improve structure and readability' },
-    sysTokens:250, toolCalls:4,
-  },
-  {
-    id:'review', icon:'🔍', category:'dev',
-    zh:{ name:'Code Review', desc:'审查代码质量与安全' },
-    en:{ name:'Code Review', desc:'Review code quality and security' },
-    sysTokens:200, toolCalls:1,
-  },
-  {
-    id:'explain', icon:'📖', category:'dev',
-    zh:{ name:'解释代码', desc:'解读逻辑、生成注释' },
-    en:{ name:'Explain Code', desc:'Interpret logic, generate comments' },
-    sysTokens:150, toolCalls:1,
-  },
-  {
-    id:'test', icon:'🧪', category:'dev',
-    zh:{ name:'写测试', desc:'单元测试、集成测试、E2E' },
-    en:{ name:'Write Tests', desc:'Unit, integration, and E2E tests' },
-    sysTokens:200, toolCalls:3,
-  },
-  {
-    id:'docs', icon:'📝', category:'dev',
-    zh:{ name:'写文档', desc:'README、API 文档、注释' },
-    en:{ name:'Write Docs', desc:'README, API docs, inline comments' },
-    sysTokens:150, toolCalls:1,
-  },
-  {
-    id:'agent', icon:'🤖', category:'dev',
-    zh:{ name:'多步 Agent', desc:'自主规划、多工具链式调用' },
-    en:{ name:'Multi-step Agent', desc:'Autonomous planning and chained tool calls' },
-    sysTokens:800, toolCalls:15,
-  },
-  {
-    id:'migrate', icon:'🚀', category:'dev',
-    zh:{ name:'代码迁移', desc:'框架/语言迁移、升级改造' },
-    en:{ name:'Code Migration', desc:'Framework or language migration and upgrades' },
-    sysTokens:300, toolCalls:6,
-  },
-  {
-    id:'search', icon:'🔎', category:'dev',
-    zh:{ name:'代码搜索', desc:'在仓库中查找相关代码' },
-    en:{ name:'Code Search', desc:'Find relevant code across the repo' },
-    sysTokens:200, toolCalls:8,
-  },
-  // ── NEW: Ops ──────────────────────────────────────────────
-  {
-    id:'ops_scrape', icon:'📊', category:'ops',
-    zh:{ name:'运营数据抓取', desc:'抓取日报、看板数据、运营指标汇总' },
-    en:{ name:'Ops Data Scraping', desc:'Scrape daily reports, dashboards, KPI summaries' },
-    sysTokens:400, toolCalls:12,
-  },
-  {
-    id:'heartbeat', icon:'💓', category:'ops',
-    zh:{ name:'心跳 / 定时任务', desc:'定时轮询、服务监控、自动告警通知' },
-    en:{ name:'Heartbeat / Cron Job', desc:'Scheduled polling, service monitoring, auto-alerts' },
-    sysTokens:150, toolCalls:2,
-  },
-];
-
-const CATEGORY_COLORS = {
-  dev: { bg:'rgba(0,212,170,0.08)', border:'rgba(0,212,170,0.2)', text:'#00d4aa', label:{ zh:'开发', en:'Dev' } },
-  ops: { bg:'rgba(255,179,71,0.08)', border:'rgba(255,179,71,0.25)', text:'#ffb347', label:{ zh:'运营', en:'Ops' } },
-};
-
-// ═══════════════════════════════════════════════════════════
-// MODELS
-// ═══════════════════════════════════════════════════════════
-const MODELS = [
-  { id:'opus46',    name:'Claude Opus 4.6',   tier:'Flagship',  color:'#c084fc', provider:'Anthropic',   providerColor:'#c084fc', inputPer1M:5,    outputPer1M:25,  desc:{ zh:'最强推理，复杂任务首选',             en:'Top reasoning, complex tasks' } },
-  { id:'sonnet35',  name:'Claude 3.5 Sonnet', tier:'Workhorse', color:'#60a5fa', provider:'Anthropic',   providerColor:'#c084fc', inputPer1M:3,    outputPer1M:15,  desc:{ zh:'编程 & 复杂 Agent 首选',            en:'Coding & complex agents' } },
-  { id:'haiku45',   name:'Claude Haiku 4.5',  tier:'Fast',      color:'#34d399', provider:'Anthropic',   providerColor:'#c084fc', inputPer1M:1,    outputPer1M:5,   desc:{ zh:'高吞吐、低延迟',                    en:'High throughput, low latency' } },
-  { id:'gpt52',     name:'GPT-5.2 Preview',   tier:'Reasoning', color:'#f0c040', provider:'OpenAI',      providerColor:'#10a37f', inputPer1M:1.75, outputPer1M:14,  desc:{ zh:'通用推理，均衡之选',                en:'General intelligence' } },
-  { id:'gemini25f', name:'Gemini 2.5 Flash',  tier:'Fast',      color:'#4fc3f7', provider:'Google',      providerColor:'#4285f4', inputPer1M:0.30, outputPer1M:2.50,desc:{ zh:'快速轻量，爬虫心跳首选',            en:'Fast & cheap, great for scraping/cron' } },
-  { id:'kimi25',    name:'Kimi 2.5',           tier:'Context',   color:'#ff8a65', provider:'Moonshot AI', providerColor:'#ff6b6b', inputPer1M:1.40, outputPer1M:4.00,desc:{ zh:'超长上下文，中文推理 (2M tokens)',   en:'Long-context & Chinese reasoning (2M)' } },
-  { id:'minimax25', name:'MiniMax M2.5',       tier:'Budget',    color:'#81c784', provider:'MiniMax',     providerColor:'#ab47bc', inputPer1M:0.15, outputPer1M:0.90,desc:{ zh:'低复杂度常规任务，最省钱',           en:'Budget pick for routine tasks' } },
-];
-
-// ═══════════════════════════════════════════════════════════
-// TOKEN LEVEL MAPPINGS  (bilingual)
-// ═══════════════════════════════════════════════════════════
-const INPUT_LEVELS = [
-  { tokens:50,     words:'~50字',  hint:{ zh:'约 20 个字的简单问题',         en:'A simple one-liner question' } },
-  { tokens:400,    words:'~300字', hint:{ zh:'一个函数，约 50 行',           en:'One function, ~50 lines' } },
-  { tokens:1500,   words:'~1000字',hint:{ zh:'一个完整文件，约 200 行',       en:'A full file, ~200 lines' } },
-  { tokens:5000,   words:'~3500字',hint:{ zh:'3-5 个相关文件',               en:'3–5 related files' } },
-  { tokens:15000,  words:'~1万字', hint:{ zh:'10+ 个文件，一个功能模块',      en:'10+ files, one feature module' } },
-  { tokens:40000,  words:'~3万字', hint:{ zh:'核心代码库，约 500 行',         en:'Core codebase, ~500 files' } },
-  { tokens:100000, words:'~7万字', hint:{ zh:'完整代码库 + 文档',            en:'Full repo + documentation' } },
-  { tokens:500000, words:'~35万字',hint:{ zh:'百万行代码级别（需 Kimi 2.5）', en:'Million-line codebase (needs Kimi 2.5)' } },
-];
-const OUTPUT_LEVELS = [
-  { tokens:50,   hint:{ zh:'直接回答，不展开',          en:'Direct answer, no elaboration' } },
-  { tokens:400,  hint:{ zh:'解释 + 简单示例',           en:'Explanation + simple example' } },
-  { tokens:1200, hint:{ zh:'可运行的完整实现',           en:'Runnable complete implementation' } },
-  { tokens:3000, hint:{ zh:'代码 + 解释 + 注释',        en:'Code + explanation + comments' } },
-  { tokens:8000, hint:{ zh:'架构 + 代码 + 测试 + 文档', en:'Architecture + code + tests + docs' } },
-];
-const TOOL_LEVELS = [
-  { calls:0,  hint:{ zh:'直接回答，不调用工具',       en:'Direct answer, no tools' } },
-  { calls:3,  hint:{ zh:'读取 2-5 个文件',            en:'Read 2–5 files' } },
-  { calls:10, hint:{ zh:'遍历项目结构，读取关键文件', en:'Traverse project, read key files' } },
-  { calls:20, hint:{ zh:'自主规划、执行、验证',       en:'Autonomous plan, execute, verify' } },
-  { calls:50, hint:{ zh:'多轮迭代，反复调用工具',     en:'Multi-round iteration, heavy tool use' } },
-];
-const SCALE_TABS = [1, 100, 1000, 10000, 100000];
-
-// ═══════════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════════
-let lang = 'zh';
-let state = {
-  task: TASKS[0],
-  inputLevel: 2, outputLevel: 2, toolLevel: 1, scale: 1,
-  sysTokens:0, inputTokens:0, outputTokens:0, toolCalls:0,
-};
-
-// ═══════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════
-const t = key => I18N[lang][key];
-function fmt(n) {
-  if (n < 0.0001) return '<$0.0001';
-  if (n < 0.01)   return '$' + n.toFixed(4);
-  if (n < 1)      return '$' + n.toFixed(3);
-  if (n < 100)    return '$' + n.toFixed(2);
-  return '$' + n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
-function fmtTok(n) {
-  if (n >= 1_000_000) return (n/1_000_000).toFixed(2) + 'M';
-  if (n >= 1000)      return (n/1000).toFixed(1) + 'K';
-  return n.toString();
-}
-
-// ═══════════════════════════════════════════════════════════
-// RENDER TASKS
-// ═══════════════════════════════════════════════════════════
-function renderTasks() {
-  const grid = document.getElementById('taskGrid');
-  grid.innerHTML = '';
-  TASKS.forEach(task => {
-    const cat = CATEGORY_COLORS[task.category];
-    const card = document.createElement('div');
-    card.className = 'task-card no-select' + (task.id === state.task.id ? ' selected' : '');
-    card.innerHTML = `
-      <div class="task-category" style="background:${cat.bg};border:1px solid ${cat.border};color:${cat.text}">${cat.label[lang]}</div>
-      <div class="task-icon">${task.icon}</div>
-      <div class="task-name">${task[lang].name}</div>
-      <div class="task-desc">${task[lang].desc}</div>
-      <div class="task-meta">
-        <span>sys ~${task.sysTokens}</span>
-        <span>tools ×${task.toolCalls}</span>
-      </div>
-    `;
-    card.addEventListener('click', () => {
-      state.task = task;
-      const tl = task.toolCalls <= 0 ? 0 : task.toolCalls <= 3 ? 1 : task.toolCalls <= 10 ? 2 : task.toolCalls <= 20 ? 3 : 4;
-      state.toolLevel = tl;
-      document.getElementById('toolHumanSlider').value = tl;
-      renderTasks();
-      calculate();
-    });
-    grid.appendChild(card);
-  });
-}
-
-// ═══════════════════════════════════════════════════════════
-// RENDER SCALE TABS
-// ═══════════════════════════════════════════════════════════
-function renderScaleTabs() {
-  const container = document.getElementById('scaleTabs');
-  container.innerHTML = '';
-  const labels = t('scaleTabs');
-  SCALE_TABS.forEach((v, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'scale-tab' + (v === state.scale ? ' active' : '');
-    btn.textContent = labels[i];
-    btn.addEventListener('click', () => {
-      state.scale = v;
-      document.getElementById('scaleDisplay').textContent = labels[i];
-      renderScaleTabs();
-      calculate();
-    });
-    container.appendChild(btn);
-  });
-  // Update scaleDisplay text
-  const activeIdx = SCALE_TABS.indexOf(state.scale);
-  document.getElementById('scaleDisplay').textContent = labels[activeIdx >= 0 ? activeIdx : 0];
-}
-
-// ═══════════════════════════════════════════════════════════
-// RENDER SLIDER HINTS
-// ═══════════════════════════════════════════════════════════
-function renderHints() {
-  const ih = t('inputHints');
-  const oh = t('outputHints');
-  const th = t('toolHints');
-  const make = (arr, id) => {
-    const el = document.getElementById(id);
-    el.innerHTML = arr.map(h => `<span>${h}</span>`).join('');
-  };
-  make([ih[0], ih[2], ih[4], ih[7]], 'inputHints');
-  make([oh[0], oh[2], oh[4]], 'outputHints');
-  make([th[0], th[2], th[4]], 'toolHints');
-}
-
-// ═══════════════════════════════════════════════════════════
-// UPDATE FROM HUMAN SLIDERS
-// ═══════════════════════════════════════════════════════════
-function updateFromHuman() {
-  const il = INPUT_LEVELS[state.inputLevel];
-  const ol = OUTPUT_LEVELS[state.outputLevel];
-  const tl = TOOL_LEVELS[state.toolLevel];
-  const ih = t('inputHints');
-  const oh = t('outputHints');
-  const th = t('toolHints');
-
-  state.inputTokens  = il.tokens;
-  state.outputTokens = ol.tokens;
-  state.toolCalls    = tl.calls;
-  state.sysTokens    = state.task.sysTokens || 400;
-
-  const toolTokens = state.toolCalls * 245;
-  const totalIn    = state.sysTokens + state.inputTokens + toolTokens;
-  const totalOut   = state.outputTokens;
-
-  document.getElementById('inputHumanVal').textContent  = ih[state.inputLevel];
-  document.getElementById('outputHumanVal').textContent = oh[state.outputLevel];
-  document.getElementById('toolHumanVal').textContent   = th[state.toolLevel];
-  document.getElementById('totalTokensDisplay').textContent = fmtTok(totalIn + totalOut) + ' tokens';
-
-  document.getElementById('tokenTranslation').innerHTML =
-    `<span style="color:var(--accent)">${t('transTitle')}</span><br>` +
-    `📄 ${t('transInput')}: <span style="color:var(--text2)">${il.hint[lang]}</span> → <span style="color:var(--accent)">${fmtTok(state.inputTokens)} tokens</span>${lang==='zh'?' (≈ '+il.words+')':''}<br>` +
-    `💬 ${t('transOutput')}: <span style="color:var(--text2)">${ol.hint[lang]}</span> → <span style="color:var(--accent)">${fmtTok(state.outputTokens)} tokens</span><br>` +
-    `🤖 ${t('transTool')}: <span style="color:var(--text2)">${tl.hint[lang]}</span> → <span style="color:var(--accent)">${tl.calls}${t('transCalls')} (${fmtTok(toolTokens)} tokens)</span><br>` +
-    `<span style="color:var(--border2)">──────────────────────────</span><br>` +
-    `${t('transTotal')}: <span style="color:var(--text)">${fmtTok(totalIn)} ${t('transInput')}</span> + <span style="color:var(--text)">${fmtTok(totalOut)} ${t('transOutput')}</span>`;
-}
-
-// ═══════════════════════════════════════════════════════════
-// CALCULATE & RENDER MODELS
-// ═══════════════════════════════════════════════════════════
-function calculate() {
-  updateFromHuman();
-  const toolTokens   = state.toolCalls * 245;
-  const totalInput   = state.sysTokens + state.inputTokens + toolTokens;
-  const totalOutput  = state.outputTokens;
-  const scale        = state.scale;
-  const scaledInput  = totalInput * scale;
-  const scaledOutput = totalOutput * scale;
-
-  document.getElementById('sumInput').textContent  = fmtTok(scaledInput);
-  document.getElementById('sumOutput').textContent = fmtTok(scaledOutput);
-
-  const costs = MODELS.map(m => ({ model:m, cost: (scaledInput/1e6)*m.inputPer1M + (scaledOutput/1e6)*m.outputPer1M }));
-  const minCost = Math.min(...costs.map(c=>c.cost));
-  const maxCost = Math.max(...costs.map(c=>c.cost));
-
-  document.getElementById('sumMin').textContent = fmt(minCost);
-  document.getElementById('sumMax').textContent = fmt(maxCost);
-
-  // Recommendation
-  const totalTok = totalInput + totalOutput;
-  let rec = '';
-  const id = state.task.id;
-  if (id === 'heartbeat')                              rec = lang==='zh' ? 'Gemini 2.5 Flash — 定时任务，成本极低' : 'Gemini 2.5 Flash — Cron jobs, ultra-low cost';
-  else if (id === 'ops_scrape' && totalTok > 20000)    rec = lang==='zh' ? 'Kimi 2.5 — 超长上下文抓取，2M token 无损' : 'Kimi 2.5 — Long-context scraping, 2M tokens';
-  else if (id === 'ops_scrape')                        rec = lang==='zh' ? 'Gemini 2.5 Flash — 轻量抓取，最省成本' : 'Gemini 2.5 Flash — Light scraping, cheapest';
-  else if (id === 'agent' || id === 'migrate')         rec = lang==='zh' ? 'Claude 3.5 Sonnet — Coding Agent 首选' : 'Claude 3.5 Sonnet — Best for coding agents';
-  else if (id === 'search' && totalTok > 20000)        rec = lang==='zh' ? 'Kimi 2.5 — 超长上下文检索' : 'Kimi 2.5 — Long-context code search';
-  else if (id === 'explain' || id === 'docs')          rec = lang==='zh' ? 'MiniMax M2.5 — 文档任务最省钱' : 'MiniMax M2.5 — Cheapest for doc tasks';
-  else if (id === 'codewrite' || id === 'refactor')    rec = lang==='zh' ? 'Claude 3.5 Sonnet — 编程首选' : 'Claude 3.5 Sonnet — Best for coding';
-  else if (totalTok > 30000)                           rec = lang==='zh' ? 'Kimi 2.5 — 超长上下文首选' : 'Kimi 2.5 — Best for long context';
-  else                                                  rec = lang==='zh' ? 'GPT-5.2 Preview — 通用推理均衡之选' : 'GPT-5.2 Preview — Balanced general reasoning';
-  document.getElementById('recBadge').textContent = t('recPrefix') + rec;
-
-  // Models
-  const list = document.getElementById('modelList');
-  list.innerHTML = '';
-  [...costs].sort((a,b) => a.cost - b.cost).forEach(({ model, cost }, i) => {
-    const pct       = maxCost > 0 ? (cost / maxCost) * 100 : 0;
-    const inputCost = (totalInput  * scale / 1e6) * model.inputPer1M;
-    const outCost   = (totalOutput * scale / 1e6) * model.outputPer1M;
-    const scaleLabel = scale > 1 ? `×${scale.toLocaleString()}${t('times')}` : t('perReq');
-
-    const row = document.createElement('div');
-    row.className = 'model-row';
-    row.style.animationDelay = (i * 0.05) + 's';
-
-    const cheapBadge = i === 0
-      ? `<span style="font-size:10px;color:var(--accent);font-family:var(--mono);padding:2px 6px;background:rgba(0,212,170,0.1);border-radius:3px;margin-left:6px">${t('cheapest')}</span>`
-      : '';
-    const kimiTip = model.id === 'kimi25'
-      ? `<div style="margin-top:8px;padding:6px 10px;background:rgba(255,138,101,0.08);border:1px solid rgba(255,138,101,0.2);border-radius:6px;font-size:10px;color:#ff8a65;font-family:var(--mono)">${t('kimiTip')}</div>`
-      : '';
-
-    row.innerHTML = `
-      <div class="model-header">
-        <div class="model-info">
-          <div class="model-dot" style="background:${model.color}"></div>
-          <div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-              <span class="model-name" style="color:${model.color}">${model.name}</span>
-              <span class="model-tier">${model.tier}</span>
-              ${cheapBadge}
-            </div>
-            <div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">
-              <span style="color:${model.providerColor}">${model.provider}</span>&nbsp;·&nbsp;${model.desc[lang]}
-            </div>
-          </div>
-        </div>
-        <div style="text-align:right;flex-shrink:0;margin-left:12px">
-          <div class="model-cost" style="color:${model.color}">${fmt(cost)}</div>
-          <div class="model-cost-label">${scaleLabel}</div>
-        </div>
-      </div>
-      <div class="token-breakdown">
-        <div class="token-chip">In <span>$${model.inputPer1M}/1M</span></div>
-        <div class="token-chip">Out <span>$${model.outputPer1M}/1M</span></div>
-        <div class="token-chip">In cost <span>${fmt(inputCost)}</span></div>
-        <div class="token-chip">Out cost <span>${fmt(outCost)}</span></div>
-      </div>
-      <div class="cost-bar-wrap">
-        <div class="cost-bar" style="width:${pct}%;background:${model.color}"></div>
-      </div>
-      ${kimiTip}
-    `;
-    list.appendChild(row);
-  });
-}
-
-// ═══════════════════════════════════════════════════════════
-// APPLY i18n TO STATIC ELEMENTS
-// ═══════════════════════════════════════════════════════════
-function applyI18n() {
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (I18N[lang][key]) el.textContent = I18N[lang][key];
-  });
-  document.getElementById('sectionTask').textContent   = t('sectionTask');
-  document.getElementById('sectionParams').textContent = t('sectionParams');
-  document.getElementById('sectionModels').textContent = t('sectionModels');
-  document.getElementById('footnote').innerHTML = t('footnote').replace(/\n/g, '<br>');
-  document.documentElement.lang = lang;
-}
-
-// ═══════════════════════════════════════════════════════════
-// LANG TOGGLE
-// ═══════════════════════════════════════════════════════════
-function initLangToggle() {
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      lang = btn.dataset.lang;
-      document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
-      applyI18n();
-      renderHints();
-      renderScaleTabs();
-      renderTasks();
-      calculate();
-    });
-  });
-}
-
-// ═══════════════════════════════════════════════════════════
-// SLIDERS
-// ═══════════════════════════════════════════════════════════
-function initSliders() {
-  document.getElementById('inputHumanSlider').addEventListener('input', e => {
-    state.inputLevel = +e.target.value; calculate();
-  });
-  document.getElementById('outputHumanSlider').addEventListener('input', e => {
-    state.outputLevel = +e.target.value; calculate();
-  });
-  document.getElementById('toolHumanSlider').addEventListener('input', e => {
-    state.toolLevel = +e.target.value; calculate();
-  });
-}
-
-// ═══════════════════════════════════════════════════════════
-// BOOT
-// ═══════════════════════════════════════════════════════════
-applyI18n();
-renderHints();
-renderScaleTabs();
-renderTasks();
-initLangToggle();
-initSliders();
-calculate();
-</script>
+<!-- Data must load before logic -->
+<script src="assets/js/i18n.js"></script>
+<script src="assets/js/data.js"></script>
+<script src="assets/js/calculator.js"></script>
+<script src="assets/js/ui.js"></script>
+<script src="assets/js/main.js"></script>
 </body>
 </html>
